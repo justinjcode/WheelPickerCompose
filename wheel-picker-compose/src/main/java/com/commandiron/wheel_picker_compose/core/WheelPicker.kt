@@ -1,5 +1,10 @@
 package com.commandiron.wheel_picker_compose.core
 
+import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +21,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import dev.chrisbanes.snapper.SnapperLayoutInfo
@@ -23,6 +29,7 @@ import dev.chrisbanes.snapper.rememberLazyListSnapperLayoutInfo
 import dev.chrisbanes.snapper.rememberSnapperFlingBehavior
 import kotlin.math.absoluteValue
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 internal fun WheelPicker(
     modifier: Modifier = Modifier,
@@ -38,8 +45,15 @@ internal fun WheelPicker(
     val snapperLayoutInfo = rememberLazyListSnapperLayoutInfo(lazyListState = lazyListState)
     val isScrollInProgress = lazyListState.isScrollInProgress
 
+    val context = LocalContext.current
+    val vibrator = context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+
     LaunchedEffect(isScrollInProgress, count) {
         if(!isScrollInProgress) {
+            if (vibrator.hasVibrator()) {
+                val vibrationEffect = VibrationEffect.createOneShot(10, VibrationEffect.DEFAULT_AMPLITUDE) // 10ms vibration
+                vibrator.vibrate(vibrationEffect)
+            }
             onScrollFinished(calculateSnappedItemIndex(snapperLayoutInfo) ?: startIndex)?.let {
                 lazyListState.scrollToItem(it)
             }
